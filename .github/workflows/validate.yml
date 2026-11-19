@@ -1,0 +1,24 @@
+name: Validate
+
+# Thin workflow shipped on every question branch (and therefore in every
+# provisioned team repo). Language-agnostic: the central reusable workflow reads
+# challenges/<CHALLENGE_SLUG>/cjp.json to know how to run THIS question's tests.
+on:
+  push:
+    branches: ['**']
+
+# Resilience to rapid pushes: a newer push to a branch cancels that branch's
+# in-flight run, so only the latest commit is validated.
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    # Skip the repo-creation push (the initial broken-code commit).
+    if: ${{ !github.event.created }}
+    uses: codejam-arena/validator/.github/workflows/validate.yml@main
+    with:
+      challenge_slug: ${{ vars.CHALLENGE_SLUG }}
+    secrets:
+      VALIDATOR_TOKEN: ${{ secrets.VALIDATOR_TOKEN }}
